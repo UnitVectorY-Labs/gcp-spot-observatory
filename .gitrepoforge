@@ -1,0 +1,14 @@
+name: gcp-spot-observatory
+default_branch: main
+config:
+  description: "Tracks historical GCP Spot VM pricing and preemption rates across regions and machine types."
+  license: MIT
+  language: go
+  release: docker-go
+  justfile: true
+  release_github: false
+  status: wip
+  codecov:
+    enabled: false
+  docs:
+    enabled: false
