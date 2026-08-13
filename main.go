@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"runtime/debug"
+
+	"github.com/UnitVectorY-Labs/gcp-spot-observatory/internal/command"
 )
 
 // Version is the application version, injected at build time via ldflags
@@ -17,5 +21,8 @@ func main() {
 		}
 	}
 
-	// TODO: Implement everything
+	if err := command.Execute(Version); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
 }
