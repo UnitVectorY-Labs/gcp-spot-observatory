@@ -358,7 +358,7 @@ func (b *templateBuffer) Write(p []byte) (int, error) { *b = append(*b, p...); r
 
 const rootTemplate = `{{define "root"}}<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GCP Spot Observatory</title><script src="https://unpkg.com/htmx.org@2.0.8"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<title>GCP Spot Observatory</title><meta name="htmx-config" content='{"noSwap":[204,304,"4xx","5xx"]}'><script src="https://unpkg.com/htmx.org@4.0.0/dist/htmx.min.js" integrity="sha384-BvJpBiO8Kh31EqtJe5DRIeWrHWnCGkwytKs9NKFi86Hhw96dEqdEMzZDeK9iEGTc" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
 <style>:root{font-family:ui-sans-serif,system-ui;color:#172033;background:#f4f7fb}body{margin:0}.shell{max-width:1100px;margin:auto;padding:40px 24px}h1{margin:0 0 6px;font-size:28px}.subtitle{color:#60708a;margin:0 0 28px}.panel{background:white;border:1px solid #dce4ef;border-radius:14px;padding:22px;box-shadow:0 8px 28px #2538580d}.region-control{max-width:520px;margin-bottom:16px}.controls{display:grid;grid-template-columns:minmax(260px,1fr) 180px;gap:16px;margin-bottom:20px}label{display:block;font-size:13px;font-weight:650;color:#52637d;margin-bottom:7px}select{width:100%;padding:10px 12px;border:1px solid #b9c6d8;border-radius:8px;background:white;font-size:15px}.details{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:#dce4ef;border:1px solid #dce4ef;border-radius:10px;overflow:hidden;margin:0 0 26px}.detail{background:#f8fafc;padding:14px}.detail dt{font-size:12px;color:#65758d;margin-bottom:5px}.detail dd{font-size:15px;font-weight:650;margin:0;overflow-wrap:anywhere}.charts{display:grid;gap:22px}.chart{height:300px;position:relative;border-top:1px solid #e8edf4;padding-top:16px}.empty{padding:48px;text-align:center;color:#687991}.htmx-indicator{color:#65758d;font-size:13px}@media(max-width:800px){.details{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.controls{grid-template-columns:1fr}.shell{padding:24px 12px}}</style></head>
 <body><main class="shell"><h1>GCP Spot Observatory</h1><p class="subtitle">Canonical Spot VM price and preemption history</p><section class="panel">
 {{if .Regions}}<div class="region-control"><label for="region">Region</label><select id="region" name="region_id" hx-get="/explorer" hx-target="#explorer" hx-swap="innerHTML settle:25ms" hx-sync="#explorer:replace" hx-indicator="#loading">{{range .Regions}}<option value="{{.ID}}" {{if eq .ID $.SelectedRegionID}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
@@ -396,11 +396,11 @@ function scheduleSpotCharts(){
   });
 }
 document.addEventListener('DOMContentLoaded',scheduleSpotCharts);
-document.body.addEventListener('htmx:beforeSwap',function(event){
-  const target=event.detail.target;
+document.body.addEventListener('htmx:before:swap',function(event){
+  const target=event.detail.ctx.target;
   if(target&&((target.matches&&target.matches('#explorer,#selection'))||(target.querySelector&&target.querySelector('canvas'))))destroySpotCharts();
 });
-document.body.addEventListener('htmx:afterSettle',scheduleSpotCharts);
+document.body.addEventListener('htmx:after:settle',scheduleSpotCharts);
 </script></body></html>{{end}}`
 
 const explorerTemplate = `{{define "explorer"}}{{if .Machines}}<form class="controls" hx-get="/selection" hx-target="#selection" hx-trigger="change changed" hx-swap="innerHTML settle:25ms" hx-sync="#explorer:replace" hx-indicator="#loading"><input type="hidden" name="region_id" value="{{.RegionID}}">
