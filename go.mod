@@ -1,6 +1,6 @@
 module github.com/UnitVectorY-Labs/gcp-spot-observatory
 
-go 1.26.0 // GOVERSION
+go 1.27.0 // GOVERSION
 
 require (
 	github.com/jackc/pgx/v5 v5.10.0
