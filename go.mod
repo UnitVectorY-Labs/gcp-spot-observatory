@@ -3,7 +3,7 @@ module github.com/UnitVectorY-Labs/gcp-spot-observatory
 go 1.27.0 // GOVERSION
 
 require (
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/pressly/goose/v3 v3.28.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/oauth2 v0.37.0
