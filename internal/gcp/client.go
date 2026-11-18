@@ -3,7 +3,8 @@ package gcp
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -69,9 +70,9 @@ type Money struct {
 
 func (m *Money) UnmarshalJSON(data []byte) error {
 	var raw struct {
-		CurrencyCode string          `json:"currencyCode"`
-		Units        json.RawMessage `json:"units"`
-		Nanos        json.RawMessage `json:"nanos"`
+		CurrencyCode string         `json:"currencyCode"`
+		Units        jsontext.Value `json:"units"`
+		Nanos        jsontext.Value `json:"nanos"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -87,13 +88,43 @@ func (m *Money) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func parseJSONInt(raw json.RawMessage) (int64, error) {
+func parseJSONInt(raw jsontext.Value) (int64, error) {
 	if len(raw) == 0 || string(raw) == "null" {
 		return 0, nil
 	}
-	s := strings.Trim(string(raw), `"`)
+	s := string(raw)
+	if raw.Kind() == '"' {
+		if err := json.Unmarshal(raw, &s); err != nil {
+			return 0, err
+		}
+	}
 	return strconv.ParseInt(s, 10, 64)
 }
+
+// Number preserves the exact JSON number for storage without floating-point rounding.
+type Number string
+
+func (n *Number) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*n = ""
+		return nil
+	}
+	value := jsontext.Value(data)
+	if value.Kind() == '"' {
+		var s string
+		if err := json.Unmarshal(data, &s); err != nil {
+			return err
+		}
+		value = jsontext.Value(s)
+	}
+	if value.Kind() != '0' || strings.TrimSpace(string(value)) != string(value) || !value.IsValid() {
+		return fmt.Errorf("invalid JSON number %q", data)
+	}
+	*n = Number(value)
+	return nil
+}
+
+func (n Number) String() string { return string(n) }
 
 func (m Money) Nanodollars() (int64, error) {
 	const billion = int64(1_000_000_000)
@@ -109,8 +140,8 @@ type PricePoint struct {
 }
 
 type PreemptionPoint struct {
-	Interval       Interval    `json:"interval"`
-	PreemptionRate json.Number `json:"preemptionRate"`
+	Interval       Interval `json:"interval"`
+	PreemptionRate Number   `json:"preemptionRate"`
 }
 
 type CapacityHistory struct {
@@ -288,9 +319,7 @@ func (c *Client) request(ctx context.Context, method, path string, body any, tar
 				return readErr
 			}
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				decoder := json.NewDecoder(bytes.NewReader(data))
-				decoder.UseNumber()
-				if err := decoder.Decode(target); err != nil {
+				if err := json.Unmarshal(data, target); err != nil {
 					return fmt.Errorf("decode GCP response: %w", err)
 				}
 				return nil
