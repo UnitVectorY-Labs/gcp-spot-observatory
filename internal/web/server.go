@@ -3,7 +3,7 @@ package web
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"html/template"
 	"log/slog"
